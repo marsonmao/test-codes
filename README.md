@@ -1,2 +1,2 @@
 # test-codes
-c++ &amp; c# test codes
+c++ test codes
