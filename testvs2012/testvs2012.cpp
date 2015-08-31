@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <memory>
 #include <scoped_allocator>
 #include <typeinfo>
@@ -19,9 +20,11 @@
 #include <unordered_map>
 #include <ctime>
 #include <iterator>
+#include <chrono>
 
 #include "test_specialize_float.h"
 #include "Debug.h"
+#include "TestStaticVariable.h"
 
 void function1(int* pint)
 {
@@ -2678,6 +2681,168 @@ void PrintXX(const NewColor& color = NewColor::Black)
     std::cout << color.r << color.g << color.b << endl;
 }
 
+class XXYY
+{
+public:
+    XXYY(int* pi): pi(pi)
+    {
+
+    }
+
+    int* pi;
+};
+
+class container;
+class one
+{
+public:
+    one()
+    {
+        eventsHandler = NULL;
+    };
+    ~one() {};
+
+    void (container::*eventsHandler)();
+};
+
+class container
+{
+public:
+    container()
+    {
+        zone = new one;
+        zone->eventsHandler = &container::events;
+    };
+    ~container()
+    {
+        delete zone;
+    };
+
+    one* zone;
+    void events()
+    {
+        std::cout << "event handler is on..." << std::endl;
+    };
+};
+
+int* growArray(int* p_values, int cur_size)
+{
+    int* p_new_values = new int[ cur_size * 2 ];
+    for (int i = 0; i < cur_size; ++i)
+    {
+        p_new_values[ i ] = p_values[ i ];
+        cout << p_new_values[ i ] << endl;
+    }
+    delete p_values;
+    return p_new_values;
+}
+
+class DeleteSelf
+{
+public:
+    int x;
+
+    void Die()
+    {
+        x = -1;
+        delete this;
+        x = -2;
+    }
+};
+
+class Framework
+{
+public:
+    int objectIndex;
+    int spriteIndex;
+
+    void objectDestroy()
+    {
+        //Don't even bother with a deconstructor -- to unpredictable
+
+        //Check if we have a sprite
+        if (spriteIndex != -1)
+        {
+            //agk::DeleteSprite(spriteIndex);
+        }
+
+        //Final low-level destroy
+        delete this;
+    }
+
+};
+void CreateFramework(vector<Framework*>& gameObjects, int index)
+{
+    Framework* f = new Framework();
+    f->objectIndex = index;
+    gameObjects.push_back(f);
+}
+std::vector<int>& getDestroyQueue()
+{
+    static std::vector<int> dq;
+    return dq;
+}
+void instanceDestroy(int objectToDelete)
+{
+    auto& destroyQueue = getDestroyQueue();
+    destroyQueue.insert(destroyQueue.end(), objectToDelete);
+}
+
+template <typename T, int U> class JTEMP
+{
+public:
+    T x;
+    JTEMP():x(0) {}
+    int DoDo()
+    {
+        return x+U;
+    }
+};
+
+char** Make(const std::vector<std::string>& strings)
+{
+    char** cs = new char* [strings.size()];
+    for (int i = 0, l = strings.size(); i < l; ++i)
+    {
+        cs[i] = const_cast<char*>(strings[i].c_str());
+    }
+    return cs;
+}
+
+void Take(char* cs[], int size)
+{
+    cs[0][0] = 'x';
+}
+
+class Msg
+{
+public:
+    friend class Log;
+    std::string message;
+    //std::chrono::system_clock::time_point timestamp;
+    int timestamp;
+};
+bool compareTimestamp(const Msg& lhs, const Msg& rhs)
+{
+    return lhs.timestamp < rhs.timestamp;
+};
+class Log
+{
+    std::map<std::string, std::set<Msg>> messages;
+
+    std::set<Msg, decltype(compareTimestamp)*> x;
+
+    Log() : x(compareTimestamp) {}
+};
+
+// set 1
+// header: static const int G_X;
+//const int G_X = 5000; // error C2086
+
+// set 2
+// header: extern const int G_X;
+//const int G_X = 5000; // ok
+
 //////////////////////////////////////////////////////////////////////////
 
 /*********************************************
@@ -2688,7 +2853,162 @@ void PrintXX(const NewColor& color = NewColor::Black)
 int _tmain(int argc, _TCHAR* argv[])
 {
     {
+        MyMethod1();
+        MyMethod3();
+        MyMethod4();
 
+        SomeMethod2();
+
+        cout << G_N_X;
+        cout << MyClass555::X;
+        cout << G_X;
+        //SomeMethod2();
+
+        cout << 1;
+    }
+    {
+        Msg m1;
+        m1.timestamp = 0;
+        Msg m2;
+        m2.timestamp = 1;
+        std::set<Msg, decltype(compareTimestamp)*> x;
+        x.insert(m1);
+        x.insert(m2);
+
+        //std::map<std::string, decltype(x)> msgs;
+        std::map<std::string, std::set<Msg, decltype(compareTimestamp)*>> msgs;
+        msgs.insert(std::make_pair("x", x));
+    }
+    {
+        std::vector<std::string> v(3);
+        v[0] = "haha1";
+        v[1] = "haha2";
+        v[2] = "haha3";
+
+
+        char** cs = Make(v);
+        Take(cs, v.size());
+        delete[] cs;
+
+        char* cc[3] = {0, 0, 0};
+        Take(cc, 3);
+        cout << 1;
+    }
+    {
+        std::string s("hello");
+
+        char* c = new char[6]; // "hello";
+        c[5] = 0;
+        for (int i = 0; i < s.length(); ++i)
+        {
+            c[i] = s[i];
+        }
+
+        delete[] c;
+
+        cout << 1;
+    }
+    {
+        JTEMP<int, 999> jt1;
+        int r1 = jt1.DoDo();
+
+        JTEMP<int, 888> jt2;
+        int r2 = jt2.DoDo();
+
+        cout << 1;
+    }
+    {
+        vector<Framework*> gameObjects;
+        for (int i = 0; i < 10; ++i)
+        {
+            CreateFramework(gameObjects, i);
+        }
+
+        for (vector<Framework*>::iterator num = gameObjects.begin(); num != gameObjects.end(); ++num)
+        {
+            //The current thing
+            Framework* currentObject = *num;
+            instanceDestroy(currentObject->objectIndex);
+        }
+
+        auto& destroyQueue = getDestroyQueue();
+        for (vector<int>::iterator destroy = destroyQueue.begin(); destroy != destroyQueue.end(); ++destroy)
+        {
+            //The object we're lookin' fer
+            int currentDestroy = *destroy;
+            for (vector<Framework*>::iterator num = gameObjects.begin(); num != gameObjects.end(); ++num)
+            {
+                //The current thing
+                Framework* currentObject = *num;
+
+                //Check if it's the one
+                if (currentObject->objectIndex == *destroy)
+                {
+                    //Delete it, remove it from the vector, and break from the loop
+                    gameObjects.erase(num);
+                    currentObject->objectDestroy();
+                    break;
+                }
+            }
+        }
+
+        cout << 1;
+    }
+    {
+        DeleteSelf* ds = new DeleteSelf();
+        ds->x = 100;
+        ds->Die();
+        ds->x = 100;
+        //delete ds;
+        ds->x = 100;
+        cout << 1;
+    }
+    {
+        int next_element = 0;
+        int size = 10;
+        int* p_values = new int[ size ];
+        int val;
+        cout << "Please enter a number: ";
+        cin >> val;
+        while (val > 0)
+        {
+            if (size == next_element + 1)
+            {
+                // now all we need to do is implement growArray
+                p_values = growArray(p_values, size);
+            }
+            p_values[ next_element++ ] = val;
+            cout << "Please enter a number (or 0 to exit): ";
+            cin >> val;
+        }
+
+        cout << 1;
+    }
+    {
+        container* test = new container;
+        test->zone->eventsHandler;
+
+        std::cout << "just checker..." << std::endl;
+        delete test;
+
+        //http://stackoverflow.com/questions/31912399/class-member-function-variable-pointing-to-another-class-function-member
+
+        system("pause");
+    }
+    {
+        if (int x = 1)
+        {
+            cout << "1";
+        }
+        if (auto x = 100)
+        {
+            cout << "1";//
+        }
+    }
+    {
+        int ints[3] = {0, 1, 2};
+        XXYY xxyy(ints);
+        cout << "1";
     }
     {
         NewColor nc;

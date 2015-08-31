@@ -63,6 +63,9 @@
     <ClInclude Include="Debug.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="TestStaticVariable.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -73,6 +76,9 @@
     </ClCompile>
     <ClCompile Include="object.cpp">
       <Filter>DODEntitySystem</Filter>
+    </ClCompile>
+    <ClCompile Include="AnotherCPP.cpp">
+      <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

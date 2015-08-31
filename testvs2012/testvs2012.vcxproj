@@ -89,12 +89,14 @@
     <ClInclude Include="some_header.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="system.h" />
+    <ClInclude Include="TestStaticVariable.h" />
     <ClInclude Include="test_specialize.h" />
     <ClInclude Include="test_specialize_float.h" />
     <ClInclude Include="utility.h" />
     <ClInclude Include="world.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnotherCPP.cpp" />
     <ClCompile Include="object.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
